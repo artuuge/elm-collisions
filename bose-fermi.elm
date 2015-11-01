@@ -1,21 +1,22 @@
--- Tested with Elm 0.14 
--- Run "elm-make checkbox-radio.elm --output checkbox-radio.html" 
--- to generate html. 
+-- Filename: bose-fermi.elm
+
+-- Language: Elm 0.15
+-- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
 
--- This is an extension of the example checkbox-single.elm to many boxes. 
+-- This is an extension of the example checkbox.elm to many boxes. 
 -- The new aspect is that the boxes can follow either "Bose statistics" 
 -- (the check-box case), or the "Fermi statistics" (the radio-button case). 
 -- Bose: any number of boxes can be selected. 
 -- Fermi: at most one box can be selected. 
 
-import Color (..)
-import Graphics.Collage (..)
-import Graphics.Element (..)
+import Color exposing (..)
+import Graphics.Collage exposing (..)
+import Graphics.Element exposing (..)
 import Graphics.Input as I 
 import List as L
-import Signal (..)
+import Signal exposing (..)
 import Text as T
 
 -- One needs to label the boxes in the collection (the cluster). 
@@ -37,7 +38,6 @@ type alias Box = { label : Label, state : State }
 -- List is a funtor and tensor product (extension over Kind) is a functor
 -- The collection of boxes is termed a cluster. 
 type alias Cluster = { kind : Kind, boxes : List Box }
-
 
 -- Define the types for the step combinators. 
 -- stepState: Fact -> State -> State
@@ -74,8 +74,8 @@ reportSelected cluster =
 
 displayReport : Report -> Element 
 displayReport report = 
-  flow right [ T.plainText "Current selection: "
-             , T.asText report
+  flow right [  show "Current selection: "
+             , show report
              ]
 
 initialState : State
@@ -104,28 +104,29 @@ displayState state =
   in collage w h [ rect (toFloat w) (toFloat h) |> filled c ]
 -- hardwire the choice of colors
 
-viewBox : Channel Action -> Box -> Element
+viewBox : Mailbox Action -> Box -> Element
 viewBox chan box = 
   displayState box.state 
-    |> I.hoverable (send chan << E << Hover box.label) 
-    |> I.clickable (send chan << E <| Click box.label)
+    |> I.hoverable (message chan.address << E << Hover box.label) 
+    |> I.clickable (message chan.address << E <| Click box.label)
 -- the actions which a box can emit are in the monomorphic image of Event
 
-viewClusterPic : Channel Action -> Cluster -> Element 
+
+viewClusterPic : Mailbox Action -> Cluster -> Element 
 viewClusterPic chan cluster = 
     flow right <| L.map (viewBox chan) cluster.boxes
 
 viewClusterReport : Cluster -> Element 
 viewClusterReport = displayReport << reportSelected 
 
-viewClusterButtons : Channel Action -> Element 
+viewClusterButtons : Mailbox Action -> Element 
 viewClusterButtons chan = 
   flow right 
-    [ I.button (send chan (Reset Bose)) "Bose" 
-    , I.button (send chan (Reset Fermi)) "Fermi"
+    [ I.button (message chan.address (Reset Bose)) "Bose" 
+    , I.button (message chan.address (Reset Fermi)) "Fermi"
     ]
 
-viewCluster : Channel Action -> Cluster -> Element 
+viewCluster : Mailbox Action -> Cluster -> Element 
 viewCluster chan cluster = 
   flow down 
     [ viewClusterPic chan cluster 
@@ -172,11 +173,10 @@ defaultKind : Kind
 defaultKind = Bose
 -- hardwire the starting kind of the cluster
 
-actions : Channel Action 
-actions = channel (Reset defaultKind)
+actions : Mailbox Action 
+actions = mailbox (Reset defaultKind)
 
 main : Signal Element
 main = viewCluster actions
     <~ foldp stepCluster 
-         (initCluster defaultKind defaultLabels) (subscribe actions)
-
+         (initCluster defaultKind defaultLabels) actions.signal

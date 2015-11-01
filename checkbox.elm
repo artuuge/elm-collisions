@@ -1,20 +1,20 @@
--- Tested with Elm 0.14
--- Run "elm-make checkbox-single.elm --output checkbox-single.html" 
--- to generate html. 
+-- Filename: checkbox.elm
+
+-- Language: Elm 0.15
+-- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
 
--- filename: checkbox-single.elm
 -- This file illustrates how to create a single checkbox which changes its 
 -- color depending on whether it is selected or not, and whether one 
 -- hovers over it with a mouse pointer or not. 
 
-import Color (..)
-import Graphics.Collage (..)
-import Graphics.Element (..)
+import Color exposing (..)
+import Graphics.Collage exposing (..)
+import Graphics.Element exposing (..)
 import Graphics.Input as I 
 import Maybe as M
-import Signal (..)
+import Signal exposing (..)
 import Text as T
 
 type alias State = { width : Int
@@ -43,11 +43,11 @@ display st =
         (True, True)   -> darkOrange
   in collage w h [ rect (toFloat w) (toFloat h) |> filled c ]
 
-view : Channel (Maybe Action) -> State -> Element 
+view : Mailbox (Maybe Action) -> State -> Element 
 view chan st = 
   display st 
-    |> I.hoverable (send chan << Just << Hover)
-    |> I.clickable (send chan << Just <| Click) 
+    |> I.hoverable (message chan.address << Just << Hover)
+    |> I.clickable (message chan.address << Just <| Click) 
 
 step : Action -> State -> State 
 step ac st = case ac of 
@@ -57,8 +57,8 @@ step ac st = case ac of
 -- There is no particular reason to use the Maybe functor, but 
 -- it is convenient to initialize the channel to Nothing. 
 -- Creating a channel is an IMPURE part of Elm. 
-actions : Channel (Maybe Action)
-actions = channel Nothing
+actions : Mailbox (Maybe Action)
+actions = mailbox Nothing
 
 maybe : b -> (a -> b) -> Maybe a -> b
 maybe y f mx = case mx of 
@@ -71,5 +71,4 @@ maybe y f mx = case mx of
 -- put: a = Action, b = (State -> State). 
 main : Signal Element 
 main = view actions 
-    <~ foldp (maybe identity step) initialState (subscribe actions)
-
+    <~ foldp (maybe identity step) initialState actions.signal

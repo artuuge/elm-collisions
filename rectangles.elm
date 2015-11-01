@@ -1,13 +1,14 @@
--- Tested with Elm 0.14 
--- Run "elm-make colliding-rectangles.elm --output colliding-rectangles.html" 
--- to generate html. 
+-- Filename: rectangles.elm
+
+-- Language: Elm 0.15 
+-- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
 
 -- This file illustrates how to implement a system of moving objects in space 
 -- which can collide and bounce from each other. The present file contains a 
 -- realization of the case where the objects are rectangles. 
--- There is a similar example: colliding-balls.elm
+-- There is a similar example: collisions.elm
 
 -- The main principle applied to handle the collisions is to minimize the 
 -- time of an overlap. One needs to write a combinator which detects an 
@@ -20,12 +21,12 @@
 -- One may resize the window of the browser when the program is running. 
 -- The image is going to adjust itself in a natural way.  
 
-import Color (..)
-import Graphics.Collage (..) 
-import Graphics.Element (..)
+import Color exposing (..)
+import Graphics.Collage exposing (..) 
+import Graphics.Element exposing (..)
 import Graphics.Input as I
 import List as L
-import Signal (..)
+import Signal exposing (..)
 import Text as T 
 import Time 
 import Window
@@ -215,6 +216,12 @@ escapeTimeRct rct0 rct1 =
         (Nothing, Just vt) -> Just vt
         (Just ht, Just vt) -> Just (min ht vt) 
 
+maybe : b -> (a -> b) -> Maybe a -> b
+maybe y f mx = 
+  case mx of 
+    Nothing -> y
+    Just x -> f x
+
 -- Adjust the velocities of objects so that the overlap 
 -- is eliminated as fast as possible. 
 -- There are four options: do nothing, exchange the x-components 
@@ -243,7 +250,7 @@ interactEscRct esct (Rct r0) (Rct r1) =
                oes' = oes |> L.filter (isJust << snd) 
                           |> L.map (\(opt, Just t) -> (opt, t)) 
                           |> L.sortBy snd
-            in fst (L.head oes')
+            in maybe opt0 fst (L.head oes')
 
 interactRct : Rct -> Rct -> (Rct, Rct) 
 interactRct = interactEscRct escapeTimeRct
@@ -351,4 +358,3 @@ initialConfig = [ initRct (400.0, 100.0) (-0.1, 0.2) darkBlue
                 , initRct (150.0, 200.0) (-0.3, 0.45) darkPurple
                 , initRct (-420.0, 280.0) (-0.7, -0.15) lightBrown
                 ]
-

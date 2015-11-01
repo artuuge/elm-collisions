@@ -1,13 +1,14 @@
--- Tested with Elm 0.14 
--- Run "elm-make colliding-balls.elm --output colliding-balls.html" 
--- to generate html. 
+-- Filename: collisions.elm
+
+-- Language: Elm 0.15
+-- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
 
 -- This file illustrates how to implement a system of moving objects in space 
 -- which can collide and bounce from each other. The present file contains a 
 -- realization of the case where the objects are two dimensional balls. 
--- There is a similar example: colliding-rectangles.elm
+-- There is a similar example: rectangles.elm
 
 -- The main principle applied to handle the collisions is to minimize the 
 -- time of an overlap. One needs to write a combinator which detects an 
@@ -20,12 +21,12 @@
 -- One may resize the window of the browser when the program is running. 
 -- The image is going to adjust itself in a natural way.  
 
-import Color (..)
-import Graphics.Collage (..) 
-import Graphics.Element (..)
+import Color exposing (..)
+import Graphics.Collage exposing (..) 
+import Graphics.Element exposing (..)
 import Graphics.Input as I
 import List as L
-import Signal (..)
+import Signal exposing (..)
 import Text as T 
 import Time 
 import Window
@@ -200,6 +201,12 @@ exchangeMomenta (nx, ny) (m0, (px0, py0)) (m1, (px1, py1)) =
                py1' = (ny * (pn1 - q) + ty * pt1)/nn
             in ((px0', py0'), (px1', py1'))
 
+maybe : b -> (a -> b) -> Maybe a -> b
+maybe y f mx = 
+  case mx of 
+    Nothing -> y
+    Just x -> f x
+
 -- Adjust the velocities of objects so that the overlap 
 -- is eliminated as fast as possible. 
 -- There are two options: to do nothing, or to exchange the momenta 
@@ -233,9 +240,7 @@ interactEscCircle esct (Circle circ0) (Circle circ1) =
                           |> L.map (\(opt, Just t) -> (opt, t)) 
                           |> L.filter (\(_, t) -> t > 0.0)
                           |> L.sortBy snd
-            in if (oes' == []) 
-               then opt0
-               else fst (L.head oes')
+            in maybe opt0 fst (L.head oes')
 
 interactCircle : Circle -> Circle -> (Circle, Circle)
 interactCircle = interactEscCircle escapeTimeCircle
@@ -345,5 +350,4 @@ initialConfig = [ initCircle (400.0, 100.0) (0.0, 0.0) darkBlue
                 , initCircle (-420.0, -300.0) (0.3, 0.7) lightBlue
                 , initCircle (150.0, 200.0) (-0.3, 0.45) darkPurple 
                 , initCircle (-420.0, 280.0) (-0.7, -0.15) lightBrown
-                ] 
-
+                ]
