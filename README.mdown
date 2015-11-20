@@ -2,7 +2,12 @@
 
 The present repository contains a collection of examples illustrating *Functional Reactive Programming (FRP)* in [Elm](http://elm-lang.org/).
 
-## INSTRUCTIONS
+### INSTRUCTIONS
 
 The current version of Elm is 0.16. In case you do not have Elm installed on your machine yet, the simplest way to test the *.elm files is at [http://elm-lang.org/try](http://elm-lang.org/try) where you can cut-and-paste the raw code and compile it.
  
+You can install the latest version of Elm from [https://github.com/elm-lang/elm-platform](https://github.com/elm-lang/elm-platform). Once you have it running, the examples can be compiled as follows:
+```
+elm make filename.elm --output filename.html
+```
+Open `filename.html` after that in your browser. 

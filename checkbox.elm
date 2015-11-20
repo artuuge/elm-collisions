@@ -1,6 +1,6 @@
 -- Filename: checkbox.elm
 
--- Language: Elm 0.15
+-- Language: Elm 0.16
 -- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
@@ -51,8 +51,8 @@ view chan st =
 
 step : Action -> State -> State 
 step ac st = case ac of 
-  Click   -> { st | selected <- (not st.selected) }
-  Hover b -> { st | excited <- b }
+  Click   -> { st | selected = (not st.selected) }
+  Hover b -> { st | excited = b }
 
 -- There is no particular reason to use the Maybe functor, but 
 -- it is convenient to initialize the channel to Nothing. 
@@ -70,5 +70,4 @@ maybe y f mx = case mx of
 -- (Maybe Action -> State -> State). In the definition of maybe, 
 -- put: a = Action, b = (State -> State). 
 main : Signal Element 
-main = view actions 
-    <~ foldp (maybe identity step) initialState actions.signal
+main = map (view actions) (foldp (maybe identity step) initialState actions.signal)

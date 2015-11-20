@@ -1,6 +1,6 @@
 -- Filename: bose-fermi.elm
 
--- Language: Elm 0.15
+-- Language: Elm 0.16
 -- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
@@ -137,13 +137,13 @@ viewCluster chan cluster =
 stepState : Kind -> Fact -> State -> State 
 stepState kind fact state = case kind of 
   Fermi -> case fact of 
-    CC p       -> { state | selected <- p } 
-    HH True p  -> {state | excited <- p } 
+    CC p       -> { state | selected = p } 
+    HH True p  -> {state | excited = p } 
     HH False _ -> state
   Bose -> case fact of 
-    CC True    -> { state | selected <- (not state.selected) } 
+    CC True    -> { state | selected = (not state.selected) } 
     CC False   -> state 
-    HH True p  -> {state | excited <- p } 
+    HH True p  -> {state | excited = p } 
     HH False _ -> state
 -- this combinator defines the logic of the cluster 
 
@@ -155,7 +155,7 @@ transfer n event = case event of
 
 stepBox : Kind -> Event -> Box -> Box 
 stepBox kind event box = 
-  { box | state <- 
+  { box | state = 
     stepState kind (transfer box.label event) box.state }
 
 defaultLabels : List Int 
@@ -166,7 +166,7 @@ stepCluster : Action -> Cluster -> Cluster
 stepCluster action cluster = case action of 
   Reset kind -> initCluster kind defaultLabels
   E event -> 
-    { cluster | boxes <- 
+    { cluster | boxes = 
       L.map (stepBox cluster.kind event) cluster.boxes} 
 
 defaultKind : Kind 
@@ -177,6 +177,5 @@ actions : Mailbox Action
 actions = mailbox (Reset defaultKind)
 
 main : Signal Element
-main = viewCluster actions
-    <~ foldp stepCluster 
-         (initCluster defaultKind defaultLabels) actions.signal
+main = map (viewCluster actions) (foldp stepCluster 
+         (initCluster defaultKind defaultLabels) actions.signal)
