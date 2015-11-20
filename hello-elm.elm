@@ -1,6 +1,6 @@
 -- Filename: hello-elm.elm
 
--- Language: Elm 0.15
+-- Language: Elm 0.16
 -- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
@@ -17,7 +17,7 @@ import Time exposing (..)
 import Window
 
 main : Signal Element
-main = scene <~ Window.dimensions ~ (every (0.01*second))
+main = map2 scene Window.dimensions (every (0.01*second))
 
 -- amplitude
 amp : Float

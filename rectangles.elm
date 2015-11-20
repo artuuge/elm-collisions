@@ -1,6 +1,6 @@
 -- Filename: rectangles.elm
 
--- Language: Elm 0.15 
+-- Language: Elm 0.16 
 -- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
@@ -154,7 +154,7 @@ evolveRct dt (Rct r) =
   let (cx, cy) = r.center 
       (vx, vy) = r.velocity 
       (cx', cy') = (cx + vx * dt, cy + vy * dt) 
-  in Rct { r | center <- (cx', cy') }
+  in Rct { r | center = (cx', cy') }
 
 -- detection of an overlap 
 isOverlapRct : Rct -> Rct -> Bool
@@ -176,7 +176,7 @@ reflectRct (m, n) (Rct rct as r0) =
                 ((rightSide r0 > rm) && vx > 0.0) ) then (-vx) else vx
       vy' = if (((downSide r0 < dm) && vy < 0.0) || 
                 ((upSide r0 > um) && vy > 0.0) ) then (-vy) else vy
-   in Rct { rct | velocity <- (vx', vy') }
+   in Rct { rct | velocity = (vx', vy') }
 
 -- The time necessary to remove the horizontal overlap. 
 -- The return value is Nothing if the overlap cannot vanish because 
@@ -188,22 +188,22 @@ escapeHoriz : Rct -> Rct -> Maybe Time.Time
 escapeHoriz (Rct r0)  (Rct r1) = 
   let (vx0, _) = r0.velocity
       (vx1, _) = r1.velocity
-   in if | vx0 == vx1 -> Nothing
-         | vx0 > vx1 -> 
-           let t = ((rightSide (Rct r1)) - (leftSide (Rct r0)))/(vx0 - vx1) 
-           in Just t
-         | vx0 < vx1 -> escapeHoriz (Rct r1) (Rct r0)   
+   in if vx0 == vx1 then Nothing
+      else if vx0 > vx1 then  
+             let t = ((rightSide (Rct r1)) - (leftSide (Rct r0)))/(vx0 - vx1) 
+             in Just t
+      else escapeHoriz (Rct r1) (Rct r0)   
 
 -- The time necessary to remove the vertical overlap. 
 escapeVert : Rct -> Rct -> Maybe Time.Time 
 escapeVert (Rct r0)  (Rct r1) = 
   let (_, vy0) = r0.velocity
       (_, vy1) = r1.velocity
-   in if | vy0 == vy1 -> Nothing
-         | vy0 > vy1 -> 
-           let t = ((upSide (Rct r1)) - (downSide (Rct r0)))/(vy0 - vy1) 
-           in Just t
-         | vy0 < vy1 -> escapeVert (Rct r1) (Rct r0)   
+   in if vy0 == vy1 then Nothing
+      else if vy0 > vy1 then 
+             let t = ((upSide (Rct r1)) - (downSide (Rct r0)))/(vy0 - vy1) 
+             in Just t
+       else escapeVert (Rct r1) (Rct r0)   
 
 -- The escape time definiting the moment when an overlap disappears. 
 escapeTimeRct : Rct -> Rct -> Maybe Time.Time 
@@ -222,6 +222,9 @@ maybe y f mx =
     Nothing -> y
     Just x -> f x
 
+infty : Float
+infty = 6.022e23   -- Avogadro const 
+
 -- Adjust the velocities of objects so that the overlap 
 -- is eliminated as fast as possible. 
 -- There are four options: do nothing, exchange the x-components 
@@ -233,14 +236,14 @@ interactEscRct esct (Rct r0) (Rct r1) =
   let (vx0, vy0) = r0.velocity
       (vx1, vy1) = r1.velocity
       opt0 = (Rct r0, Rct r1) 
-      optH = let r0' = {r0 | velocity <- (vx1, vy0) } 
-                 r1' = {r1 | velocity <- (vx0, vy1) } 
+      optH = let r0' = {r0 | velocity = (vx1, vy0) } 
+                 r1' = {r1 | velocity = (vx0, vy1) } 
               in (Rct r0', Rct r1')
-      optV = let r0' = {r0 | velocity <- (vx0, vy1) } 
-                 r1' = {r1 | velocity <- (vx1, vy0) } 
+      optV = let r0' = {r0 | velocity = (vx0, vy1) } 
+                 r1' = {r1 | velocity = (vx1, vy0) } 
               in (Rct r0', Rct r1')
-      optHV = let r0' = {r0 | velocity <- (vx1, vy1) } 
-                  r1' = {r1 | velocity <- (vx0, vy0) } 
+      optHV = let r0' = {r0 | velocity = (vx1, vy1) } 
+                  r1' = {r1 | velocity = (vx0, vy0) } 
                in (Rct r0', Rct r1')
       opts = [opt0, optH, optV, optHV]
       escs = L.map (uncurry esct) opts
@@ -248,7 +251,7 @@ interactEscRct esct (Rct r0) (Rct r1) =
       then opt0 
       else let oes = L.map2 (,) opts escs
                oes' = oes |> L.filter (isJust << snd) 
-                          |> L.map (\(opt, Just t) -> (opt, t)) 
+                          |> L.map (\(opt, mt) -> (opt, maybe infty (\t -> t) mt)) 
                           |> L.sortBy snd
             in maybe opt0 fst (L.head oes')
 
@@ -318,10 +321,10 @@ step (TW dt (m, n) as tw) rcts =
 ----------
 
 mySignal : Signal TW
-mySignal = sampleOn myFps (TW <~ myFps ~ Window.dimensions)
+mySignal = sampleOn myFps (map2 TW myFps Window.dimensions)
 
 main : Signal Element
-main = view <~ Window.dimensions ~ foldp step initialConfig mySignal
+main = map2 view Window.dimensions (foldp step initialConfig mySignal)
 
 ----------
 

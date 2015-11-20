@@ -1,6 +1,6 @@
 -- Filename: collisions.elm
 
--- Language: Elm 0.15
+-- Language: Elm 0.16
 -- You can run this code at http://elm-lang.org/try
 
 -- Author: artuuge@gmail.com
@@ -122,7 +122,7 @@ evolveCircle dt (Circle circ as c) =
   let (cx, cy) = circ.center
       (vx, vy) =  getVelocity c
       (cx', cy') = (cx + vx * dt, cy + vy * dt) 
-  in Circle { circ | center <- (cx', cy') }
+  in Circle { circ | center = (cx', cy') }
 
 -- detection of an overlap
 isOverlapCircle : Circle -> Circle -> Bool 
@@ -150,7 +150,7 @@ reflectCircle (m, n) (Circle circ) =
       py' = if ((cy - r < dm && py < 0) || (cy + r > um && py > 0)) 
             then (-py) 
             else py
-   in Circle {circ | momentum <- (px', py') }
+   in Circle {circ | momentum = (px', py') }
 
 -- The time necessary to remove an overlap if the objects stay on the geodesics. 
 -- The return value Nothing corresponds to the fact that the overlap state 
@@ -207,6 +207,9 @@ maybe y f mx =
     Nothing -> y
     Just x -> f x
 
+infty : Float
+infty = 6.022e23 -- Avogadro constant, just for fun.
+
 -- Adjust the velocities of objects so that the overlap 
 -- is eliminated as fast as possible. 
 -- There are two options: to do nothing, or to exchange the momenta 
@@ -228,8 +231,8 @@ interactEscCircle esct (Circle circ0) (Circle circ1) =
       ((px0', py0'), (px1', py1')) = 
         exchangeMomenta (nx, ny) (m0, (px0, py0)) (m1, (px1, py1)) 
       opt0 = ((Circle circ0), (Circle circ1)) 
-      optE = let circ0' = {circ0 | momentum <- (px0', py0')} 
-                 circ1' = {circ1 | momentum <- (px1', py1')} 
+      optE = let circ0' = {circ0 | momentum = (px0', py0')} 
+                 circ1' = {circ1 | momentum = (px1', py1')} 
               in ((Circle circ0'), (Circle circ1'))
       opts = [opt0, optE]
       mts = L.map (uncurry esct) opts
@@ -237,7 +240,8 @@ interactEscCircle esct (Circle circ0) (Circle circ1) =
       then opt0 
       else let oes = L.map2 (,) opts mts
                oes' = oes |> L.filter (isJust << snd) 
-                          |> L.map (\(opt, Just t) -> (opt, t)) 
+                          |> L.map (\(opt, mt) ->
+                            (opt, maybe infty (\t -> t) mt)) 
                           |> L.filter (\(_, t) -> t > 0.0)
                           |> L.sortBy snd
             in maybe opt0 fst (L.head oes')
@@ -308,10 +312,10 @@ step (TW dt (m, n) as tw) circles =
 ----------
 
 mySignal : Signal TW
-mySignal = sampleOn myFps (TW <~ myFps ~ Window.dimensions)
+mySignal = sampleOn myFps (map2 TW myFps Window.dimensions)
 
 main : Signal Element
-main = view <~ Window.dimensions ~ foldp step initialConfig mySignal
+main = map2 view Window.dimensions (foldp step initialConfig mySignal)
 
 ----------
 
@@ -351,3 +355,4 @@ initialConfig = [ initCircle (400.0, 100.0) (0.0, 0.0) darkBlue
                 , initCircle (150.0, 200.0) (-0.3, 0.45) darkPurple 
                 , initCircle (-420.0, 280.0) (-0.7, -0.15) lightBrown
                 ]
+
