@@ -12,3 +12,14 @@ If you wish to compile the examples locally, install Elm on your machine, and ex
 elm make filename.elm
 ```
 This creates an `index.html` which can be opened in a browser.
+
+### DEMOS
+
+The precompiled versions of the examples are put on the `gh-pages` branch. To see the full list: [click here](http://artuuge.github.io/elm-collisions/index.html).
+Here are some highlights:
+
+- Say hello to Elm: [hello-elm](http://artuuge.github.io/elm-collisions/0.17/hello-elm/index.html)
+
+- Observe the collisions of discs: [discs](http://artuuge.github.io/elm-collisions/0.17/collisions/discs/index.html)
+
+- Look at flying bricks: [bricks](http://artuuge.github.io/elm-collisions/0.17/collisions/bricks/index.html)
